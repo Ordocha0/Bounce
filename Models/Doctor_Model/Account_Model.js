@@ -1,41 +1,38 @@
-import { client, connectDb } from "../Utils/db.js";
-import { createPassword , comparePassword } from "../Utils/password.js";
-import { signInEmail , sendResetCodeEmail , sendResetPasswordEmail , deletePatientEmail } from "../Utils/email.js";
-import e from "express";
-
-// Connect to the database
-await connectDb();
+import { pool } from "../../Utils/db.js";
+import { createPassword , comparePassword } from "../../Utils/password.js";
+import { signInEmail , sendResetCodeEmail , sendResetPasswordEmail , deleteAccountEmail } from "../../Utils/email.js";
 
 
-const createPatient = async (email, password , name) => {
+
+const createDoctor = async (email, password , name) => {
   try {
-    const checkPatient = await client.query("SELECT * FROM patients WHERE email = $1", [email]);
+    const checkDoctor = await pool.query("SELECT * FROM doctors WHERE email = $1", [email]);
 
-    if (checkPatient.rows.length > 0) {
+    if (checkDoctor.rows.length > 0) {
       return "Account already exists.Try logging in";
     }
-    const sql = "INSERT INTO patients (email, password , name) VALUES ($1, $2 , $3)";
+    const sql = "INSERT INTO doctors (email, password , name) VALUES ($1, $2 , $3)";
     const values = [email, await createPassword(password) , name];
-    const response = await client.query(sql, values);
+    const response = await pool.query(sql, values);
     if (response.rowCount === 1) {
       await signInEmail(email , name);
-      return "Patient Created";
+      return "Doctor Created";
     }
   } catch (error) {
     throw error;
   }
 };
 
-const verifyPatient = async (email, password) => {
+const verifyDoctor = async (email, password) => {
   try {
-    const sql = "SELECT * FROM patients WHERE email = $1";
+    const sql = "SELECT * FROM doctors WHERE email = $1";
     const values = [email];
-    const response = await client.query(sql, values);
+    const response = await pool.query(sql, values);
     if (response.rows.length > 0) {
-      const patient = response.rows[0];
-      const passwordMatch = await comparePassword(password, patient.password);
+      const Doctor = response.rows[0];
+      const passwordMatch = await comparePassword(password, Doctor.password);
       if (passwordMatch) {
-        return "Patient Verified";
+        return "Doctor Verified";
       }else{
         return "Incorrect Password";
       }
@@ -49,13 +46,13 @@ const verifyPatient = async (email, password) => {
 
 const checkEmail = async (email) => {
   try {
-    const sql = "SELECT * FROM patients WHERE email = $1";
+    const sql = "SELECT * FROM doctors WHERE email = $1";
     const values = [email];
-    const response = await client.query(sql, values);
+    const response = await pool.query(sql, values);
     if (response.rows.length > 0) {
       const verificationNumber = Math.floor(100000 + Math.random() * 900000).toString();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000); 
-      const result = await client.query("UPDATE patients SET reset_code = $1, code_expires_at = $2 WHERE email = $3", [verificationNumber, expiresAt, email]);
+      const result = await pool.query("UPDATE doctors SET reset_code = $1, code_expires_at = $2 WHERE email = $3", [verificationNumber, expiresAt, email]);
       if(result.rowCount === 1){
         await sendResetCodeEmail(email, response.rows[0].name , verificationNumber);
         return verificationNumber;
@@ -71,13 +68,13 @@ const checkEmail = async (email) => {
 const resetPassword = async (email, code, password) => {
   try {
 
-    const userCheck = await client.query("SELECT * FROM patients WHERE email = $1", [email]);
+    const userCheck = await pool.query("SELECT * FROM doctors WHERE email = $1", [email]);
 
     if (userCheck.rows.length === 0) {
       return "Account does not exist. Try signing up";
     }
-    const codeCheck = await client.query(
-      "SELECT * FROM patients WHERE email = $1 AND reset_code = $2 AND code_expires_at > NOW()",
+    const codeCheck = await pool.query(
+      "SELECT * FROM doctors WHERE email = $1 AND reset_code = $2 AND code_expires_at > NOW()",
       [email, code]
     );
 
@@ -89,8 +86,8 @@ const resetPassword = async (email, code, password) => {
 
     const hashedPassword = await createPassword(password);
 
-    const updateResult = await client.query(
-      "UPDATE patients SET password = $1, reset_code = NULL, code_expires_at = NULL WHERE email = $2",
+    const updateResult = await pool.query(
+      "UPDATE doctors SET password = $1, reset_code = NULL, code_expires_at = NULL WHERE email = $2",
       [hashedPassword, email]
     );
 
@@ -107,23 +104,23 @@ const resetPassword = async (email, code, password) => {
   }
 };
 
-const deletePatient = async (email , password) => {
+const deleteDoctor = async (email , password) => {
   try {
-    const sql = "SELECT * FROM patients WHERE email = $1";
+    const sql = "SELECT * FROM doctors WHERE email = $1";
     const values = [email];
-    const response = await client.query(sql, values);
+    const response = await pool.query(sql, values);
     if(response.rows.length > 0){
       const passwordMatch = await comparePassword(password, response.rows[0].password);
       if(passwordMatch){
         console.log(response.rows[0].name);
-        const sql = "DELETE FROM patients WHERE email = $1";
+        const sql = "DELETE FROM doctors WHERE email = $1";
         const values = [email];
-        const result = await client.query(sql, values);
+        const result = await pool.query(sql, values);
         if(result.rowCount === 1){
-          await deletePatientEmail(email , response.rows[0].name);
-          return "Patient Deleted";
+          await deleteAccountEmail(email , response.rows[0].name);
+          return "Doctor Deleted";
         }else{
-          return "Error deleting Patient";
+          return "Error deleting Doctor";
         }
       }else{
         return "Incorrect Password";
@@ -132,9 +129,9 @@ const deletePatient = async (email , password) => {
       return "Account does not exist.Try signing up";
     }
   } catch (error) {
-    console.error("Delete Patient Error:", error);
+    console.error("Delete Doctor Error:", error);
     throw error;
   }
 };
 
-export { createPatient , verifyPatient , checkEmail , resetPassword , deletePatient};
+export { createDoctor , verifyDoctor , checkEmail , resetPassword , deleteDoctor};

@@ -1,5 +1,5 @@
-import { createPatient, verifyPatient, checkEmail, resetPassword , deletePatient } from "../Models/Account_Model.js";
-import { logs } from "../Utils/logs.js";
+import { createPatient, verifyPatient, checkEmail, resetPassword , deletePatient } from "../../Models/Patient_Model/Account_Model.js";
+import { logs } from "../../Utils/logs.js";
 
 
 const signUpPatient = async (req, res) => {

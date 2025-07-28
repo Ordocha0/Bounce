@@ -157,7 +157,7 @@ The Bounce Team`
   }
 }
 
-const deletePatientEmail = async (email , name) => {
+const deleteAccountEmail = async (email , name) => {
   const mailOptions = {
     from: process.env.USER,
     to: email,
@@ -191,4 +191,4 @@ The Bounce Team`
   }
 }
 
-export  { signInEmail , ResetPasswordEmail , sendResetCodeEmail , sendResetPasswordEmail , deletePatientEmail};
+export  { signInEmail , ResetPasswordEmail , sendResetCodeEmail , sendResetPasswordEmail , deleteAccountEmail};

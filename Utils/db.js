@@ -1,8 +1,9 @@
-import { Client } from "pg";
+// Utils/db.js
+import { Pool } from "pg";
 import dotenv from "dotenv";
 dotenv.config();
 
-const client = new Client({
+const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
@@ -10,20 +11,13 @@ const client = new Client({
   port: process.env.DB_PORT,
 });
 
-let isConnected = false;
+pool.on("connect", () => {
+  console.log("Connected to the database");
+});
 
-const connectDb = async () => {
-  if (!isConnected) {
-    await client.connect();
-    isConnected = true;
-  }
-};
+pool.on("error", (err) => {
+  console.error("Unexpected error on idle client", err);
+  process.exit(-1);
+});
 
-const disconnectDb = async () => {
-  if (isConnected) {
-    await client.end();
-    isConnected = false;
-  }
-};
-
-export { client, connectDb, disconnectDb };
+export { pool };
