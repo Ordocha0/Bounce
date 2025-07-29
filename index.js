@@ -15,7 +15,10 @@ app.get('/', (req, res) => {
 
 // Routes
 import AccountRoute from "./Routes/Account_Route.js";
+import AppointmentRoute from "./Routes/Appointment_Route.js";
+
 app.use("/account", AccountRoute);
+app.use("/appointment", AppointmentRoute);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);

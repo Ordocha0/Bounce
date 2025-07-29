@@ -86,6 +86,10 @@ export const up = (pgm) =>
       profile_photo: {
         type: "varchar",
         notNull: false,
+      },
+      issurance_details: {
+        type: "jsonb",
+        notNull: false,
       }
     });
   };
